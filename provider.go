@@ -12,6 +12,7 @@ import (
 
 // Provider facilitates DNS record manipulation with Hurricane Electric.
 type Provider struct {
+	// Hurricane Electric DDNS key to use for authentication when modifying DNS records.
 	APIKey string `json:"api_key,omitempty"`
 
 	rateLimiter *rate.Limiter
