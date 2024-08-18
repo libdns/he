@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/netip"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -40,6 +41,11 @@ const (
 	codeInterval = "interval"
 	codeNoHost   = "nohost"
 	codeNotFqdn  = "notfqdn"
+)
+
+var (
+	// Set environment variable to "TRUE" to enable debug logging
+	debug = os.Getenv("LIBDNS_HE_DEBUG")
 )
 
 // Query Google DNS for A/AAAA/TXT record for a given DNS name
@@ -224,8 +230,14 @@ func (p *Provider) doRequest(ctx context.Context, domain string, params map[stri
 
 	respBody := string(bodyBytes)
 	if err := checkResponse(u, respBody); err != nil {
+		if debug == "TRUE" {
+			return errors.Wrapf(err,
+				"HE api request failed, query=%s, response=%s", query, respBody,
+			)
+		}
+
 		return errors.Wrapf(err,
-			"HE api request failed, query=%s, response=%s", query, respBody,
+			"HE api request failed, response=%s", respBody,
 		)
 	}
 
