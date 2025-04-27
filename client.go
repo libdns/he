@@ -41,6 +41,7 @@ const (
 	codeInterval = "interval"
 	codeNoHost   = "nohost"
 	codeNotFqdn  = "notfqdn"
+	codeNoTXT    = "notxt"
 )
 
 var (
@@ -275,6 +276,8 @@ func checkResponse(uri *url.URL, body string) error {
 		return fmt.Errorf("the record provided does not exist in this account")
 	case codeNotFqdn:
 		return fmt.Errorf("the record provided isn't an FQDN")
+	case codeNoTXT:
+		return fmt.Errorf("no dynamic TXT record to update")
 	default:
 		// This is basically only server errors.
 		return fmt.Errorf("unknown server error")
