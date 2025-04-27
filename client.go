@@ -231,14 +231,12 @@ func (p *Provider) doRequest(ctx context.Context, domain string, params map[stri
 
 	respBody := string(bodyBytes)
 	if err := checkResponse(u, respBody); err != nil {
-		if debug {
-			return errors.Wrapf(err,
-				"HE api request failed, query=%s, response=%s", query, respBody,
-			)
+		if !debug {
+			delete(query, "password")
 		}
 
 		return errors.Wrapf(err,
-			"HE api request failed, response=%s", respBody,
+			"HE api request failed, query=%s, response=%s", query, respBody,
 		)
 	}
 
