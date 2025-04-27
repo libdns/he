@@ -30,7 +30,7 @@ const (
 
 	// API rate limit configuration
 	rateLimit = 0.125
-	rateBurst = 100
+	rateBurst = 1
 
 	// API error response codes
 	codeGood     = "good"
