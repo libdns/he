@@ -3,6 +3,7 @@ package he
 import (
 	"context"
 	"log"
+	"net/netip"
 	"os"
 	"testing"
 
@@ -36,20 +37,22 @@ func TestAppendRecords(t *testing.T) {
 	ctx := context.Background()
 
 	records := []libdns.Record{
-		{
-			Type:  "A",
-			Name:  "test001",
-			Value: "192.0.2.1",
+		libdns.Address{
+			Name: "test001",
+			IP:   netip.MustParseAddr("192.0.2.1"),
 		},
-		{
-			Type:  "AAAA",
-			Name:  "test001",
-			Value: "2001:0db8:2::1",
+		libdns.Address{
+			Name: "test001",
+			IP:   netip.MustParseAddr("2001:0db8:2::1"),
 		},
-		{
-			Type:  "TXT",
-			Name:  "test001",
-			Value: "ZYXWVUTSRQPONMLKJIHGFEDCBA",
+		libdns.TXT{
+			Name: "test001",
+			Text: "ZYXWVUTSRQPONMLKJIHGFEDCBA",
+		},
+		libdns.RR{
+			Name: "test002",
+			Type: "TXT",
+			Data: "2GXNBB3JYUNAHDSAX2K37GVW2M",
 		},
 	}
 
@@ -80,30 +83,30 @@ func TestSetRecords(t *testing.T) {
 	ctx := context.Background()
 
 	goodRecords := []libdns.Record{
-		{
-			Type:  "A",
-			Name:  "test001",
-			Value: "198.51.100.1",
+		libdns.Address{
+			Name: "test001",
+			IP:   netip.MustParseAddr("198.51.100.1"),
 		},
-		{
-			Type:  "AAAA",
-			Name:  "test001",
-			Value: "2001:0db8::1",
+		libdns.Address{
+			Name: "test001",
+			IP:   netip.MustParseAddr("2001:0db8::1"),
 		},
-		{
-			Type:  "TXT",
-			Name:  "test001",
-			Value: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+		libdns.TXT{
+			Name: "test001",
+			Text: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
 		},
-		{
-			Type:  "A",
-			Name:  "test002",
-			Value: "198.51.100.2",
+		libdns.Address{
+			Name: "test002",
+			IP:   netip.MustParseAddr("198.51.100.2"),
 		},
-		{
-			Type:  "A",
-			Name:  "test003",
-			Value: "198.51.100.3",
+		libdns.RR{
+			Name: "test002",
+			Type: "AAAA",
+			Data: "2001:0db8::1",
+		},
+		libdns.Address{
+			Name: "test003",
+			IP:   netip.MustParseAddr("198.51.100.3"),
 		},
 	}
 
@@ -117,16 +120,22 @@ func TestSetRecords(t *testing.T) {
 	}
 
 	badRecords := []libdns.Record{
-		{
-			Type:  "CNAME",
-			Name:  "test000",
-			Value: "example.org",
+		libdns.CNAME{
+			Name:   "test000",
+			Target: "example.org",
+		},
+		libdns.RR{
+			Name: "test000",
+			Type: "SRV",
+			Data: "1 2 1234 example.com",
 		},
 	}
 
-	_, err = provider.SetRecords(ctx, zone, badRecords)
-	if err == nil {
-		t.Fatalf("unsupported records should return error")
+	for _, badRecord := range badRecords {
+		_, err = provider.SetRecords(ctx, zone, []libdns.Record{badRecord})
+		if err == nil {
+			t.Fatalf("unsupported records should return error")
+		}
 	}
 }
 
@@ -134,17 +143,21 @@ func TestDeleteRecords(t *testing.T) {
 	ctx := context.Background()
 
 	records := []libdns.Record{
-		{
+		libdns.RR{
 			Type: "A",
 			Name: "test001",
 		},
-		{
+		libdns.RR{
 			Type: "AAAA",
 			Name: "test001",
 		},
-		{
+		libdns.RR{
 			Type: "TXT",
 			Name: "test001",
+		},
+		libdns.Address{
+			Name: "test002",
+			IP:   netip.MustParseAddr("198.51.100.2"),
 		},
 	}
 
