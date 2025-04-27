@@ -82,19 +82,10 @@ func (p *Provider) getDomain(ctx context.Context, zone string) ([]libdns.Record,
 			return libRecords, errors.Wrapf(err, "error parsing ip")
 		}
 
-		if parsed.Is4() {
-			libRecords = append(libRecords, libdns.Record{
-				Type:  "A",
-				Name:  "@",
-				Value: ip,
-			})
-		} else {
-			libRecords = append(libRecords, libdns.Record{
-				Type:  "AAAA",
-				Name:  "@",
-				Value: ip,
-			})
-		}
+		libRecords = append(libRecords, libdns.Address{
+			Name: "@",
+			IP:   parsed,
+		})
 	}
 
 	txt, err := r.LookupTXT(ctx, zone)
@@ -109,10 +100,9 @@ func (p *Provider) getDomain(ctx context.Context, zone string) ([]libdns.Record,
 		if t == "" {
 			continue
 		}
-		libRecords = append(libRecords, libdns.Record{
-			Type:  "TXT",
-			Name:  "@",
-			Value: t,
+		libRecords = append(libRecords, libdns.TXT{
+			Name: "@",
+			Text: t,
 		})
 	}
 
@@ -120,37 +110,51 @@ func (p *Provider) getDomain(ctx context.Context, zone string) ([]libdns.Record,
 }
 
 // Set or clear the value of a DNS entry
-func (p *Provider) setRecord(ctx context.Context, zone string, record libdns.Record, clear bool) error {
+func (p *Provider) setRecord(
+	ctx context.Context,
+	zone string,
+	record libdns.Record,
+	clear bool,
+) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
 	// Sanitize the domain, combines the zone and record names
 	// the record name should typically be relative to the zone
-	domain := libdns.AbsoluteName(record.Name, zone)
+	domain := libdns.AbsoluteName(record.RR().Name, zone)
 
 	params := map[string]string{}
 
-	switch record.Type {
-	case "TXT":
-		if clear {
+	rr := record.RR()
+
+	if !clear {
+		parsedRR, err := rr.Parse()
+		if err != nil {
+			return errors.Wrapf(err, "error parsing record")
+		}
+
+		switch rr := parsedRR.(type) {
+		case libdns.TXT:
+			params["txt"] = rr.Text
+		case libdns.Address:
+			params["myip"] = rr.IP.String()
+		case libdns.RR:
+			return fmt.Errorf("unsupported record type: %s", rr.Type)
+		default:
+			return fmt.Errorf("unsupported record type: %T", rr)
+		}
+	} else {
+		// When deleting we don't care about the RR data, just the RR type
+		switch rr.Type {
+		case "TXT":
 			params["txt"] = "\"\""
-		} else {
-			params["txt"] = record.Value
-		}
-	case "A":
-		if clear {
+		case "A":
 			params["myip"] = "127.0.0.1"
-		} else {
-			params["myip"] = record.Value
-		}
-	case "AAAA":
-		if clear {
+		case "AAAA":
 			params["myip"] = "::1"
-		} else {
-			params["myip"] = record.Value
+		default:
+			return fmt.Errorf("unsupported record type: %s", rr.Type)
 		}
-	default:
-		return fmt.Errorf("unsupported record type: %s", record.Type)
 	}
 
 	retries := 0
