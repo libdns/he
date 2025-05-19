@@ -1,9 +1,9 @@
 module github.com/libdns/he
 
-go 1.18
+go 1.23.0
 
 require (
-	github.com/libdns/libdns v1.0.0
+	github.com/libdns/libdns v1.1.0
 	github.com/pkg/errors v0.9.1
 	golang.org/x/time v0.11.0
 )
