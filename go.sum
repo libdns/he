@@ -1,5 +1,5 @@
-github.com/libdns/libdns v1.0.0 h1:IvYaz07JNz6jUQ4h/fv2R4sVnRnm77J/aOuC9B+TQTA=
-github.com/libdns/libdns v1.0.0/go.mod h1:4Bj9+5CQiNMVGf87wjX4CY3HQJypUHRuLvlsfsZqLWQ=
+github.com/libdns/libdns v1.1.0 h1:9ze/tWvt7Df6sbhOJRB8jT33GHEHpEQXdtkE3hPthbU=
+github.com/libdns/libdns v1.1.0/go.mod h1:4Bj9+5CQiNMVGf87wjX4CY3HQJypUHRuLvlsfsZqLWQ=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 golang.org/x/time v0.12.0 h1:ScB/8o8olJvc+CQPWrK3fPZNfh7qgwCrY0zJmoEQLSE=
