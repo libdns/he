@@ -21,7 +21,7 @@ import (
 
 const (
 	// User agent to use for API requests
-	userAgent = "libdns-he/1.1.0"
+	userAgent = "libdns-he/1.2.0"
 	// API URL to POST updates to
 	updateURL = "https://dyn.dns.he.net/nic/update"
 
