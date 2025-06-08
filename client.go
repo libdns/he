@@ -59,13 +59,7 @@ func (p *Provider) getDomain(ctx context.Context, zone string) ([]libdns.Record,
 	// The HE API only has an `/update` endpoint and no way
 	// to get current records. So instead, we just make
 	// simple DNS queries to get the A, AAAA, and TXT records.
-	r := &net.Resolver{
-		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			d := net.Dialer{Timeout: 10 * time.Second}
-			return d.DialContext(ctx, network, "8.8.8.8:53")
-		},
-	}
+	r := net.DefaultResolver
 
 	ips, err := r.LookupHost(ctx, zone)
 	if err != nil {
