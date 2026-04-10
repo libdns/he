@@ -2,6 +2,7 @@ package he
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -15,7 +16,6 @@ import (
 	"time"
 
 	"github.com/libdns/libdns"
-	"github.com/pkg/errors"
 	"golang.org/x/time/rate"
 )
 
@@ -66,14 +66,14 @@ func (p *Provider) getDomain(ctx context.Context, zone string) ([]libdns.Record,
 		var dnsErr *net.DNSError
 		// Ignore missing dns record
 		if !(errors.As(err, &dnsErr) && dnsErr.IsNotFound) {
-			return libRecords, errors.Wrapf(err, "error looking up host")
+			return libRecords, fmt.Errorf("error looking up host: %w", err)
 		}
 	}
 
 	for _, ip := range ips {
 		parsed, err := netip.ParseAddr(ip)
 		if err != nil {
-			return libRecords, errors.Wrapf(err, "error parsing ip")
+			return libRecords, fmt.Errorf("error parsing ip: %w", err)
 		}
 
 		libRecords = append(libRecords, libdns.Address{
@@ -87,7 +87,7 @@ func (p *Provider) getDomain(ctx context.Context, zone string) ([]libdns.Record,
 		var dnsErr *net.DNSError
 		// Ignore missing dns record
 		if !(errors.As(err, &dnsErr) && dnsErr.IsNotFound) {
-			return libRecords, errors.Wrapf(err, "error looking up txt")
+			return libRecords, fmt.Errorf("error looking up txt: %w", err)
 		}
 	}
 	for _, t := range txt {
@@ -124,7 +124,7 @@ func (p *Provider) setRecord(
 	if !clear {
 		parsedRR, err := rr.Parse()
 		if err != nil {
-			return errors.Wrapf(err, "error parsing record")
+			return fmt.Errorf("error parsing record: %w", err)
 		}
 
 		switch rr := parsedRR.(type) {
@@ -197,7 +197,7 @@ func (p *Provider) doRequest(ctx context.Context, domain string, params map[stri
 	// Create the request
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), reqBody)
 	if err != nil {
-		return errors.Wrapf(err, "error creating http request")
+		return fmt.Errorf("error creating http request: %w", err)
 	}
 
 	// Add HTTP headers
@@ -212,19 +212,19 @@ func (p *Provider) doRequest(ctx context.Context, domain string, params map[stri
 	// Wait for tokens from rate limiter
 	err = p.rateLimiter.Wait(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "error waiting for rate limiter")
+		return fmt.Errorf("error waiting for rate limiter: %w", err)
 	}
 
 	// Make HTTP request to HE API update endpoint
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return errors.Wrapf(err, "error making http request")
+		return fmt.Errorf("error making http request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrapf(err, "error reading body from http response")
+		return fmt.Errorf("error reading body from http response: %w", err)
 	}
 
 	respBody := string(bodyBytes)
@@ -233,8 +233,8 @@ func (p *Provider) doRequest(ctx context.Context, domain string, params map[stri
 			delete(query, "password")
 		}
 
-		return errors.Wrapf(err,
-			"HE api request failed, query=%s, response=%s", query, respBody,
+		return fmt.Errorf(
+			"HE api request failed, query=%s, response=%s: %w", query, respBody, err,
 		)
 	}
 
